@@ -2,8 +2,18 @@ const connection = require('../database/connection');
 
 module.exports = {
 	async index(req, res) {
-		const incidents = await connection('incidents').select('*');
+		const { page = 1 } = req.query;
 
+		const rows = 5;
+
+		const [count] = await connection('incidents').count();
+
+		const incidents = await connection('incidents')
+			.limit(rows)
+			.offset((page - 1) * rows)
+			.select('*');
+
+		res.header('X-Total-Count', count['count(*)']);
 		return res.json(incidents);
 	},
 	async store(req, res) {
@@ -37,6 +47,6 @@ module.exports = {
 			.where('id', incident_id)
 			.del();
 
-		return res.status(204).send()
+		return res.status(204).send();
 	}
 };
